@@ -1,0 +1,19 @@
+@AGENTS.md
+
+## Tray app conventions
+
+This is a tray-only WinUI 3 app built from the `winui-tray-app` skill scaffold on top of `winapp new`. Load that skill before changing app lifetime, the flyout, the tray icon, polling, settings, or secrets.
+
+- Launch with `winapp run` (or `dotnet run`); never register the package by hand. Use `winapp run --clean` to test first-run behavior.
+- `App.xaml.cs` owns the tray icon, single instance, and the only exit path (the Exit menu). There is no main window.
+- The flyout (`Views/TrayFlyoutWindow`) is hidden on dismiss and closed after a minute hidden. Anything it starts, it must stop in `FlyoutPage.OnHidden` / `Dispose`.
+- There is no network work. The clock and effect timers in `FlyoutPage` run only while the flyout is visible; hidden means the game clock is paused (`OnHidden`).
+- App API keys go in `OAuth.resw` (gitignored) and are read through `Services/Secrets`. User tokens go in `Services/CredentialStore`. Nothing secret goes in `SettingsService`.
+- Put pure decision logic (parsing, policies, formatting) in classes with no WinRT dependency, so a plain `net10.0` test project can cover it.
+
+## Game
+
+- `Logic/MinesweeperGame.cs` is the pure rules (no WinRT). `Tests/` compiles it directly; run `dotnet test Tests`.
+- `Services/GameSession` holds the game in progress so it survives the flyout closing after a minute hidden.
+- The board is drawn in code (`Controls/`: `BevelBorder`, `CellView`, `LedDisplay`, `FaceView`, `Fx`) in a fixed Windows 95 palette, deliberately not theme brushes. `FlyoutPage` owns input, the reveal ripple queue, and the explosion/win effects.
+- Debug builds have F9 on the flyout: clears the board, to check the win celebration.
