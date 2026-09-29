@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MiniSweeper.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent">
+
+    <Grid Padding="12,10,12,12" RowSpacing="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Header: back button and title  -->
+        <Grid ColumnSpacing="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button
+                x:Name="BackButton"
+                AutomationProperties.Name="Back"
+                Click="BackButton_Click"
+                Style="{StaticResource FlyoutIconButtonStyle}"
+                ToolTipService.ToolTip="Back">
+                <FontIcon FontSize="14" Glyph="&#xE72B;" />
+            </Button>
+            <TextBlock
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="Settings" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="8">
+                <TextBlock
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="General" />
+
+                <Grid
+                    Padding="16,12"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    ColumnSpacing="12"
+                    CornerRadius="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Start with Windows" />
+                        <TextBlock
+                            x:Name="StartupDescription"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Keep the tray icon ready after you sign in."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ToggleSwitch
+                        x:Name="StartupToggle"
+                        Grid.Column="1"
+                        MinWidth="0"
+                        AutomationProperties.Name="Start with Windows"
+                        IsEnabled="False"
+                        OffContent=""
+                        OnContent=""
+                        Toggled="StartupToggle_Toggled" />
+                </Grid>
+
+                <TextBlock
+                    Margin="0,12,0,0"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="Appearance" />
+
+                <Grid
+                    Padding="16,12"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    ColumnSpacing="12"
+                    CornerRadius="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Board theme" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Modern is Windows 11 style with emoji. Classic is the gray Windows 95 board."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ComboBox
+                        x:Name="ThemeCombo"
+                        Grid.Column="1"
+                        MinWidth="100"
+                        AutomationProperties.Name="Board theme"
+                        SelectionChanged="ThemeCombo_SelectionChanged">
+                        <ComboBoxItem Content="Modern" />
+                        <ComboBoxItem Content="Classic" />
+                    </ComboBox>
+                </Grid>
+
+                <TextBlock
+                    Margin="0,12,0,0"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="Game" />
+
+                <Grid
+                    Padding="16,12"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    ColumnSpacing="12"
+                    CornerRadius="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Question marks" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Right-click cycles flag, ?, then clear, like the original."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ToggleSwitch
+                        x:Name="QuestionToggle"
+                        Grid.Column="1"
+                        MinWidth="0"
+                        AutomationProperties.Name="Question marks"
+                        OffContent=""
+                        OnContent=""
+                        Toggled="QuestionToggle_Toggled" />
+                </Grid>
+
+                <Button Click="ResetBest_Click" Content="Reset best times" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <TextBlock
+            x:Name="VersionText"
+            Grid.Row="2"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            Style="{StaticResource CaptionTextBlockStyle}" />
+    </Grid>
+</Page>
