@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MiniSweeper (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "MiniSweeper (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
