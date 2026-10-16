@@ -13,13 +13,13 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!--  Header  -->
         <Grid ColumnSpacing="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -29,9 +29,31 @@
                 VerticalAlignment="Center"
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Text="Mini Sweeper" />
+            <Button
+                Grid.Column="1"
+                AutomationProperties.Name="Game info"
+                Style="{StaticResource FlyoutIconButtonStyle}"
+                ToolTipService.ToolTip="Hints and best times">
+                <FontIcon FontSize="14" Glyph="&#xE946;" />
+                <Button.Flyout>
+                    <Flyout Placement="BottomEdgeAlignedRight">
+                        <StackPanel Width="280" Spacing="6">
+                            <TextBlock
+                                x:Name="StatusText"
+                                Style="{StaticResource BodyTextBlockStyle}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                x:Name="BestText"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
             <DropDownButton
                 x:Name="DifficultyButton"
-                Grid.Column="1"
+                Grid.Column="2"
                 AutomationProperties.Name="Difficulty"
                 Content="Beginner">
                 <DropDownButton.Flyout>
@@ -39,7 +61,7 @@
                 </DropDownButton.Flyout>
             </DropDownButton>
             <Button
-                Grid.Column="2"
+                Grid.Column="3"
                 AutomationProperties.Name="Settings"
                 Click="SettingsButton_Click"
                 Style="{StaticResource FlyoutIconButtonStyle}"
@@ -55,16 +77,5 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Top" />
 
-        <!--  Footer  -->
-        <StackPanel Grid.Row="2" Spacing="2">
-            <TextBlock
-                x:Name="StatusText"
-                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                Style="{StaticResource CaptionTextBlockStyle}" />
-            <TextBlock
-                x:Name="BestText"
-                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                Style="{StaticResource CaptionTextBlockStyle}" />
-        </StackPanel>
     </Grid>
 </Page>

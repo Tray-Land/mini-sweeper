@@ -51,21 +51,31 @@ internal static class WindowPlacementService
         }
     }
 
+    /// <summary>The largest logical size a popup can take on the display the tray icon is on.</summary>
+    public static (int Width, int Height) GetAvailableLogicalSize()
+    {
+        PointInt32 anchor = GetAnchor();
+        RectInt32 work = DisplayArea.GetFromPoint(anchor, DisplayAreaFallback.Primary).WorkArea;
+        uint dpi = GetDpiForPoint(anchor);
+        int margin = 2 * WindowMargin;
+        return ((int)(work.Width * 96.0 / dpi) - margin, (int)(work.Height * 96.0 / dpi) - margin);
+    }
+
+    private static PointInt32 GetAnchor()
+    {
+        if (TryGetTrayIconRect(out RECT iconRect))
+        {
+            return new((iconRect.left + iconRect.right) / 2, (iconRect.top + iconRect.bottom) / 2);
+        }
+
+        PInvoke.GetCursorPos(out System.Drawing.Point cursor);
+        return new(cursor.X, cursor.Y);
+    }
+
     /// <summary>Moves and resizes <paramref name="window"/> (logical size) next to the tray icon.</summary>
     public static void PositionNearTray(Window window, int width, int height)
     {
-        bool haveIcon = TryGetTrayIconRect(out RECT iconRect);
-        PointInt32 anchor;
-        if (haveIcon)
-        {
-            anchor = new((iconRect.left + iconRect.right) / 2, (iconRect.top + iconRect.bottom) / 2);
-        }
-        else
-        {
-            PInvoke.GetCursorPos(out System.Drawing.Point cursor);
-            anchor = new(cursor.X, cursor.Y);
-        }
-
+        PointInt32 anchor = GetAnchor();
         DisplayArea displayArea = DisplayArea.GetFromPoint(anchor, DisplayAreaFallback.Primary);
         RectInt32 work = displayArea.WorkArea;
         uint dpi = GetDpiForPoint(anchor);

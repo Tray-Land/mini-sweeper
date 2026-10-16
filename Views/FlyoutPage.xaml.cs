@@ -24,6 +24,14 @@ public sealed partial class FlyoutPage : Page, IDisposable
 {
     private enum Press { None, Reveal, Chord }
 
+    // Matches the page's Padding in XAML (12 each side) and the window's floor size.
+    private const double PagePadding = 12;
+    private const double MinWindowWidth = 340;
+    private const double MinWindowHeight = 420;
+
+    /// <summary>The board changed size (new difficulty), so the window needs to follow.</summary>
+    public event Action? BoardResized;
+
     private readonly DispatcherQueueTimer _clockTimer;
     private readonly DispatcherQueueTimer _fxTimer;
     private readonly PriorityQueue<Action, long> _fxQueue = new();
@@ -41,6 +49,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
     private LedDisplay _mines = null!;
     private LedDisplay _time = null!;
     private double _cellSize;
+    private int? _fitCell;
 
     private Press _press;
     private bool _animate;
@@ -93,6 +102,13 @@ public sealed partial class FlyoutPage : Page, IDisposable
     public void OnShown()
     {
         _animate = true;
+        if (!ReferenceEquals(_game, GameSession.Game))
+        {
+            // Settings started a custom game while the page was away.
+            BuildDifficultyMenu();
+            Reload();
+        }
+
         RefreshSkin();
         _game.Resume();
         UpdateHud();
@@ -134,9 +150,40 @@ public sealed partial class FlyoutPage : Page, IDisposable
     {
         _game = GameSession.Game;
         _resultText = null;
+        _fitCell = null;
         BuildPanel();
         UpdateAll();
+        BoardResized?.Invoke();
         PlayIntro();
+    }
+
+    /// <summary>
+    /// Sizes the board for the screen and returns the logical window size that holds it: cells keep
+    /// their preferred size unless <paramref name="available"/> is too small, then shrink to fit.
+    /// </summary>
+    public Size FitToScreen(double availableWidth, double availableHeight)
+    {
+        Difficulty d = _game.Difficulty;
+        _panel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        double chromeW = _panel.DesiredSize.Width - (d.Columns * _cellSize) + (2 * PagePadding);
+        Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        double chromeH = DesiredSize.Height - (d.Rows * _cellSize);
+
+        int fit = (int)Math.Min(
+            Math.Min(d.CellSize, (availableWidth - chromeW) / d.Columns),
+            (availableHeight - chromeH) / d.Rows);
+        fit = Math.Max(Difficulty.MinCellSize, fit);
+        if (fit != _cellSize)
+        {
+            _fitCell = fit;
+            BuildPanel();
+            UpdateAll();
+        }
+
+        double width = Math.Max(MinWindowWidth, (d.Columns * _cellSize) + chromeW);
+        Measure(new Size(width, double.PositiveInfinity));
+        double height = Math.Max(MinWindowHeight, DesiredSize.Height);
+        return new Size(Math.Min(width, availableWidth), Math.Min(height, availableHeight));
     }
 
     /// <summary>Redraws the board when the skin setting or the taskbar's light/dark mode changed since it was built.</summary>
@@ -157,8 +204,14 @@ public sealed partial class FlyoutPage : Page, IDisposable
 
     private void BuildDifficultyMenu()
     {
+        DifficultyMenu.Items.Clear();
         DifficultyButton.Content = GameSession.Difficulty.Name;
-        foreach (Difficulty d in Difficulty.All)
+
+        // The player's custom board sits in the list once they have set one up.
+        IEnumerable<Difficulty> boards = SettingsService.HasCustomBoard
+            ? [.. Difficulty.All, GameSession.CustomDifficulty]
+            : Difficulty.All;
+        foreach (Difficulty d in boards)
         {
             RadioMenuFlyoutItem item = new()
             {
@@ -174,6 +227,11 @@ public sealed partial class FlyoutPage : Page, IDisposable
             };
             DifficultyMenu.Items.Add(item);
         }
+
+        DifficultyMenu.Items.Add(new MenuFlyoutSeparator());
+        MenuFlyoutItem custom = new() { Text = "+ Custom…", Icon = new FontIcon { Glyph = "" } };
+        custom.Click += (_, _) => App.Current.ShowSettings(toCustomBoard: true);
+        DifficultyMenu.Items.Add(custom);
     }
 
     private void BuildPanel()
@@ -184,7 +242,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
         _pressedCells.Clear();
 
         Difficulty d = _game.Difficulty;
-        _cellSize = d.CellSize;
+        _cellSize = _fitCell ?? d.CellSize;
         _cells = new CellView[_game.Count];
         _pending = new bool[_game.Count];
 
@@ -375,8 +433,9 @@ public sealed partial class FlyoutPage : Page, IDisposable
         static string Format(int seconds) =>
             seconds == 0 ? "–" : seconds < 60 ? $"{seconds} s" : $"{seconds / 60}:{seconds % 60:00} min";
 
-        BestText.Text = "Best times   " + string.Join("   ·   ",
-            Difficulty.All.Select(d => $"{d.Name} {Format(GameSession.BestSeconds(d))}"));
+        BestText.Text = "Best times\n" + string.Join("\n",
+            Difficulty.All.Append(_game.Difficulty).Distinct().Select(d =>
+                $"{(d.IsCustom ? $"Custom {d.Columns}×{d.Rows}, {d.Mines}" : d.Name)}: {Format(GameSession.BestSeconds(d))}"));
     }
 
     private void UpdateTray()

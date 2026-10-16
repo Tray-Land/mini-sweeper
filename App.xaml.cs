@@ -105,10 +105,10 @@ public partial class App : Application
         flyout.ShowPopup();
     }
 
-    public void ShowSettings()
+    public void ShowSettings(bool toCustomBoard = false)
     {
         TrayFlyoutWindow flyout = EnsureFlyout();
-        flyout.ShowSettingsPage();
+        flyout.ShowSettingsPage(toCustomBoard);
         if (!flyout.IsPopupVisible)
         {
             flyout.ShowPopup();

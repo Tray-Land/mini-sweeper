@@ -24,9 +24,6 @@ namespace MiniSweeper.Views;
 /// </summary>
 public sealed partial class TrayFlyoutWindow : WindowEx
 {
-    private const int PopupWidth = 380;
-    private const int PopupHeight = 560;
-
     private const int WS_EX_TOOLWINDOW = 0x00000080;
     private const int WS_EX_LAYERED = 0x00080000;
 
@@ -80,6 +77,7 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         InitializeComponent();
         _hwnd = (HWND)WindowNative.GetWindowHandle(this);
         PageHost.Content = _page;
+        _page.BoardResized += OnBoardResized;
 
         SystemBackdrop = _backdrop;
         ApplyShellTheme();
@@ -113,10 +111,10 @@ public sealed partial class TrayFlyoutWindow : WindowEx
     public bool IsShowingSettings => PageHost.Content is SettingsPage;
 
     /// <summary>Swaps the game for the settings page inside the flyout.</summary>
-    public void ShowSettingsPage()
+    public void ShowSettingsPage(bool toCustomBoard = false)
     {
         _settingsPage ??= new SettingsPage(ShowMainPage);
-        _settingsPage.OnShown();
+        _settingsPage.OnShown(toCustomBoard);
         _page.OnHidden();
         PageHost.Content = _settingsPage;
     }
@@ -155,9 +153,7 @@ public sealed partial class TrayFlyoutWindow : WindowEx
     public void ShowPopup()
     {
         // Position before showing so the window never flashes at a stale location.
-        WindowPlacementService.PositionNearTray(this, PopupWidth, PopupHeight);
-        _baseX = AppWindow.Position.X;
-        _baseY = AppWindow.Position.Y;
+        FitAndPosition();
 
         _hideTimer.Stop();
         _closeTimer.Stop();
@@ -175,6 +171,37 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         if (!IsShowingSettings)
         {
             _page.OnShown();
+        }
+    }
+
+    /// <summary>Sizes the window for the current board and puts it next to the tray icon.</summary>
+    private void FitAndPosition()
+    {
+        (int availW, int availH) = WindowPlacementService.GetAvailableLogicalSize();
+
+        // The window's outer size includes invisible resize borders, so the content area is smaller
+        // than what we ask for; ask for that difference on top. It only settles once the window has
+        // been sized, hence two passes.
+        for (int pass = 0; pass < 2; pass++)
+        {
+            double scale = 96.0 / Math.Max(96u, PInvoke.GetDpiForWindow(_hwnd));
+            double extraW = (AppWindow.Size.Width - AppWindow.ClientSize.Width) * scale;
+            double extraH = (AppWindow.Size.Height - AppWindow.ClientSize.Height) * scale;
+            Windows.Foundation.Size size = _page.FitToScreen(availW - extraW, availH - extraH);
+            WindowPlacementService.PositionNearTray(this, (int)Math.Ceiling(size.Width + extraW), (int)Math.Ceiling(size.Height + extraH));
+        }
+
+        _baseX = AppWindow.Position.X;
+        _baseY = AppWindow.Position.Y;
+    }
+
+    // A new difficulty while the popup is open: grow or shrink in place, keeping the bottom edge.
+    private void OnBoardResized()
+    {
+        if (_isPopupVisible && !_isHiding)
+        {
+            FitAndPosition();
+            ApplyFrame(0, 1);
         }
     }
 
@@ -216,8 +243,8 @@ public sealed partial class TrayFlyoutWindow : WindowEx
         _closeTimer.Stop();
         _animationTimer.Stop();
         _page.OnHidden();
+        _page.BoardResized -= OnBoardResized;
         _page.Dispose();
-        _settingsPage = null;
         _settingsPage = null;
 
         _uiSettings.ColorValuesChanged -= OnColorValuesChanged;
