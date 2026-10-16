@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MiniSweeper.Logic;
 using MiniSweeper.Services;
 using Windows.ApplicationModel;
 
@@ -20,14 +21,73 @@ public sealed partial class SettingsPage : Page
     }
 
     /// <summary>The page appeared: re-read state, which may have changed in Windows Settings.</summary>
-    public void OnShown()
+    public void OnShown(bool toCustomBoard = false)
     {
         _loading = true;
         QuestionToggle.IsOn = SettingsService.QuestionMarks;
         ThemeCombo.SelectedIndex = SettingsService.ModernTheme ? 0 : 1;
+        LoadCustomBoxes();
         _loading = false;
         _ = LoadStartupStateAsync();
-        BackButton.Focus(FocusState.Programmatic);
+
+        if (toCustomBoard)
+        {
+            ColumnsBox.Focus(FocusState.Programmatic);
+            // The page is not in the window yet; scroll once it has been laid out.
+            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+            {
+                SettingsScroll.UpdateLayout();
+                double top = CustomHeader.TransformToVisual((UIElement)SettingsScroll.Content).TransformPoint(new Windows.Foundation.Point(0, 0)).Y;
+                SettingsScroll.ChangeView(null, top, null, disableAnimation: true);
+            });
+        }
+        else
+        {
+            BackButton.Focus(FocusState.Programmatic);
+        }
+    }
+
+    private void LoadCustomBoxes()
+    {
+        ColumnsBox.Minimum = Difficulty.MinColumns;
+        ColumnsBox.Maximum = Difficulty.MaxColumns;
+        RowsBox.Minimum = Difficulty.MinRows;
+        RowsBox.Maximum = Difficulty.MaxRows;
+        MinesBox.Minimum = 1;
+
+        Difficulty board = GameSession.CustomDifficulty;
+        ColumnsBox.Value = board.Columns;
+        RowsBox.Value = board.Rows;
+        UpdateMinesLimit();
+        MinesBox.Value = board.Mines;
+    }
+
+    // The mine count can't exceed what the chosen size holds.
+    private void UpdateMinesLimit()
+    {
+        int columns = double.IsNaN(ColumnsBox.Value) ? Difficulty.MinColumns : (int)ColumnsBox.Value;
+        int rows = double.IsNaN(RowsBox.Value) ? Difficulty.MinRows : (int)RowsBox.Value;
+        MinesBox.Maximum = Difficulty.MaxMines(columns, rows);
+        if (!double.IsNaN(MinesBox.Value) && MinesBox.Value > MinesBox.Maximum)
+        {
+            MinesBox.Value = MinesBox.Maximum;
+        }
+    }
+
+    private void CustomBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!_loading)
+        {
+            UpdateMinesLimit();
+        }
+    }
+
+    private void PlayCustom_Click(object sender, RoutedEventArgs e)
+    {
+        static int Read(NumberBox box, int fallback) => double.IsNaN(box.Value) ? fallback : (int)box.Value;
+
+        GameSession.SetCustom(Read(ColumnsBox, Difficulty.MinColumns), Read(RowsBox, Difficulty.MinRows), Read(MinesBox, 1));
+        _goBack();
     }
 
     private static string GetVersion()
