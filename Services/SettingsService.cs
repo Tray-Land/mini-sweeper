@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using Windows.Foundation.Collections;
 using Windows.Storage;
 
 namespace MiniSweeper.Services;
@@ -38,22 +39,45 @@ internal static class SettingsService
         set => Set(nameof(ModernTheme), value);
     }
 
-    /// <summary>Index into <c>Difficulty.All</c>.</summary>
+    /// <summary>Index into <c>Difficulty.All</c>, or -1 for the custom board.</summary>
     public static int DifficultyIndex
     {
         get => Get(nameof(DifficultyIndex), 0);
         set => Set(nameof(DifficultyIndex), value);
     }
 
-    public static int GetBestSeconds(string difficultyName) => Get($"Best_{difficultyName}", 0);
+    /// <summary>The last custom board, as columns, rows, mines (defaults to the Intermediate board).</summary>
+    public static (int Columns, int Rows, int Mines) CustomBoard
+    {
+        get => (Get("CustomColumns", 16), Get("CustomRows", 16), Get("CustomMines", 40));
+        set
+        {
+            Set("CustomColumns", value.Columns);
+            Set("CustomRows", value.Rows);
+            Set("CustomMines", value.Mines);
+        }
+    }
 
-    public static void SetBestSeconds(string difficultyName, int seconds) => Set($"Best_{difficultyName}", seconds);
+    /// <summary>True once the player has set up a custom board.</summary>
+    public static bool HasCustomBoard => Get("CustomColumns", 0) != 0;
+
+    public static int GetBestSeconds(string difficultyKey) => Get($"Best_{difficultyKey}", 0);
+
+    public static void SetBestSeconds(string difficultyKey, int seconds) => Set($"Best_{difficultyKey}", seconds);
 
     public static void ClearBestTimes()
     {
-        foreach (string name in new[] { "Beginner", "Intermediate", "Expert" })
+        try
         {
-            Set($"Best_{name}", null);
+            IPropertySet values = ApplicationData.Current.LocalSettings.Values;
+            foreach (string key in values.Keys.Where(k => k.StartsWith("Best_", StringComparison.Ordinal)).ToList())
+            {
+                values.Remove(key);
+            }
+        }
+        catch
+        {
+            // Settings are best-effort; ignore storage failures.
         }
     }
 

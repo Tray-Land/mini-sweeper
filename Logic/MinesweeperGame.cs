@@ -2,14 +2,40 @@ using System.Diagnostics;
 
 namespace MiniSweeper.Logic;
 
-/// <summary>A board size. <see cref="CellSize"/> is the logical pixel size the flyout draws cells at.</summary>
+/// <summary>
+/// A board size. <see cref="CellSize"/> is the preferred logical pixel size the flyout draws cells
+/// at; the window grows with the board, and the cells only shrink (down to <see cref="MinCellSize"/>)
+/// when the screen is too small to fit it.
+/// </summary>
 public sealed record Difficulty(string Name, int Columns, int Rows, int Mines, int CellSize)
 {
+    public const int MinCellSize = 20;
+
     public static readonly Difficulty Beginner = new("Beginner", 9, 9, 10, 32);
-    public static readonly Difficulty Intermediate = new("Intermediate", 16, 16, 40, 20);
-    public static readonly Difficulty Expert = new("Expert", 20, 20, 80, 16);
+    public static readonly Difficulty Intermediate = new("Intermediate", 16, 16, 40, 30);
+    public static readonly Difficulty Expert = new("Expert", 30, 16, 99, 28);
+
+    public const string CustomName = "Custom";
+    public const int MinColumns = 8, MaxColumns = 30;
+    public const int MinRows = 8, MaxRows = 24;
 
     public static IReadOnlyList<Difficulty> All { get; } = [Beginner, Intermediate, Expert];
+
+    public bool IsCustom => Name == CustomName;
+
+    /// <summary>Identifies the board for best times: the name, plus the dimensions for custom boards.</summary>
+    public string Key => IsCustom ? $"{CustomName}_{Columns}x{Rows}x{Mines}" : Name;
+
+    /// <summary>The most mines a board of this size can hold: the first click and its neighbors stay clear.</summary>
+    public static int MaxMines(int columns, int rows) => (columns * rows) - 9;
+
+    /// <summary>A custom board, with every value pulled into its allowed range.</summary>
+    public static Difficulty Custom(int columns, int rows, int mines)
+    {
+        columns = Math.Clamp(columns, MinColumns, MaxColumns);
+        rows = Math.Clamp(rows, MinRows, MaxRows);
+        return new(CustomName, columns, rows, Math.Clamp(mines, 1, MaxMines(columns, rows)), 28);
+    }
 }
 
 public enum CellMark { None, Flag, Question }
