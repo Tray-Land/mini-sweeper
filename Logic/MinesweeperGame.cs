@@ -19,7 +19,7 @@ public sealed record Difficulty(string Name, int Columns, int Rows, int Mines, i
     public const int MinColumns = 8, MaxColumns = 30;
     public const int MinRows = 8, MaxRows = 24;
 
-    public static IReadOnlyList<Difficulty> All { get; } = [Beginner, Intermediate, Expert];
+    public static IReadOnlyList<Difficulty> All { get; } = new List<Difficulty> { Beginner, Intermediate, Expert };
 
     public bool IsCustom => Name == CustomName;
 
@@ -169,7 +169,7 @@ public sealed class MinesweeperGame
             _clock.Start();
         }
 
-        return Open([index]);
+        return Open(new[] { index });
     }
 
     /// <summary>

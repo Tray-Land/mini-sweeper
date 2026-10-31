@@ -208,9 +208,12 @@ public sealed partial class FlyoutPage : Page, IDisposable
         DifficultyButton.Content = GameSession.Difficulty.Name;
 
         // The player's custom board sits in the list once they have set one up.
-        IEnumerable<Difficulty> boards = SettingsService.HasCustomBoard
-            ? [.. Difficulty.All, GameSession.CustomDifficulty]
-            : Difficulty.All;
+        List<Difficulty> boards = [.. Difficulty.All];
+        if (SettingsService.HasCustomBoard)
+        {
+            boards.Add(GameSession.CustomDifficulty);
+        }
+
         foreach (Difficulty d in boards)
         {
             RadioMenuFlyoutItem item = new()
@@ -541,7 +544,7 @@ public sealed partial class FlyoutPage : Page, IDisposable
             return;
         }
 
-        IEnumerable<int> targets = _press == Press.Chord ? _game.Neighbors(index).Append(index) : [index];
+        IEnumerable<int> targets = _press == Press.Chord ? _game.Neighbors(index).Append(index) : new[] { index };
         foreach (int t in targets)
         {
             if (!_game.IsRevealed(t) && _game.MarkAt(t) != CellMark.Flag && !_pending[t])
