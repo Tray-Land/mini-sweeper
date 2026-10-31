@@ -67,7 +67,7 @@ Robert Donner and Curt Johnson wrote Minesweeper, and Microsoft first shipped it
 
 ## Install
 
-Download the signed MSIX for your architecture (x64 or ARM64) from the [releases](../../releases) page. If the tray icon is hidden after the first launch, look in the taskbar overflow (^).
+Download [MiniSweeper.appinstaller](https://github.com/Tray-Land/mini-sweeper/releases/latest/download/MiniSweeper.appinstaller) and open it. Windows installs the right version for your PC (x64 or ARM64) and keeps it updated. If the tray icon is hidden after the first launch, look in the taskbar overflow (^).
 
 Mini Sweeper requires Windows 10 version 1809 (build 17763) or later.
 
@@ -130,15 +130,14 @@ The rules in `Logic/MinesweeperGame.cs` have no WinRT dependency, so the test pr
 
 ## Releasing
 
-1. Bump `Version` on the `Identity` element in `Package.appxmanifest`.
-2. Run `build-msix-for-gh.ps1`.
+1. Bump `Version` on the `Identity` element in `Package.appxmanifest`, then commit and push.
+2. Run `.\build-msix-for-gh.ps1`.
+3. Publish the draft release on GitHub as the latest release, without changing its tag.
+4. Run `.\build-msix-for-gh.ps1 -VerifyPublished` to check the published feed.
 
-The script builds and signs an MSIX for each architecture and creates a draft GitHub release. To build and sign without creating a release, pass `-SkipRelease`.
+The script builds a signed x64 and ARM64 `.msixbundle` and an auto-updating `MiniSweeper.appinstaller` feed, and creates a draft GitHub release. To check the build without signing or releasing, run `.\build-msix-for-gh.ps1 -SkipRelease -NoSign -OutputRoot <folder>`.
 
-Before you can release from a fresh clone, you need two things it doesn't include:
-
-- The maintainer's local `sign-msix` PowerShell function, which does the signing.
-- The publish profiles in `Properties\PublishProfiles`, which are gitignored.
+Signing needs the maintainer's local `sign-msix` PowerShell function, which a fresh clone doesn't include.
 
 ## Troubleshooting
 
