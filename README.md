@@ -67,6 +67,8 @@ Robert Donner and Curt Johnson wrote Minesweeper, and Microsoft first shipped it
 
 ## Install
 
+[<img src="docs/MSIX.svg" alt="Install MiniSweeper (MSIX)" width="212">](https://github.com/Tray-Land/mini-sweeper/releases/latest/download/MiniSweeper.appinstaller)
+
 Download [MiniSweeper.appinstaller](https://github.com/Tray-Land/mini-sweeper/releases/latest/download/MiniSweeper.appinstaller) and open it. Windows installs the right version for your PC (x64 or ARM64) and keeps it updated. If the tray icon is hidden after the first launch, look in the taskbar overflow (^).
 
 Mini Sweeper requires Windows 10 version 1809 (build 17763) or later.
